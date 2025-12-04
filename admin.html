@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin</title><link rel="stylesheet" href="style.css"></head>
+<body>
+  <header class="topbar"><div class="brand">ProctorVision - Admin</div><nav class="navlinks"><a href="index.html">Home</a></nav></header>
+  <div class="container">
+    <h2>Active Sessions (Demo)</h2>
+    <div id="sessions" class="exams"></div>
+  </div>
+
+<script>
+function loadSessions(){
+  // demo: show last session or ongoing
+  const events = JSON.parse(localStorage.getItem('events')||'[]');
+  const sessions = {};
+  events.forEach(e => { sessions[e.sessionId] = sessions[e.sessionId] || {id:e.sessionId, events:0}; sessions[e.sessionId].events++; });
+  const el = document.getElementById('sessions');
+  el.innerHTML = '';
+  if(Object.keys(sessions).length === 0) el.innerHTML = '<div class="card">No active sessions (do a demo exam)</div>';
+  Object.values(sessions).forEach(s => {
+    const d = document.createElement('div'); d.className='exam-card';
+    d.innerHTML = `<h3>Session ${s.id}</h3><p class="small">${s.events} alerts</p><div style="margin-top:10px"><a class="btn" href="admin-view.html?session=${s.id}">Open</a></div>`;
+    el.appendChild(d);
+  });
+}
+loadSessions();
+</script>
+</body>
+</html>
