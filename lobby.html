@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Lobby - Prechecks</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">ProctorVision</div>
+    <nav class="navlinks">
+      <a href="dashboard.html">Dashboard</a>
+      <a href="index.html">Home</a>
+    </nav>
+  </header>
+
+  <div class="container">
+    <div class="grid-2">
+      <div class="card-plain">
+        <h3>Camera preview</h3>
+        <video id="preview" class="preview" autoplay playsinline muted></video>
+        <div style="margin-top:8px" class="small">Preview above — allow camera when browser asks.</div>
+        <div style="margin-top:10px" class="checks">
+          <div id="camStatus" class="small">Camera: <strong>Not started</strong></div>
+          <div id="resStatus" class="small">Resolution: —</div>
+          <div id="fpsStatus" class="small">FPS (est): —</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="card-plain">
+          <h3>Checklist</h3>
+          <div class="small">Complete these to enable Start Exam</div>
+          <ul id="checklist" style="margin-top:10px">
+            <li id="chkCam">Camera permission — <span class="small">pending</span></li>
+            <li id="chkRes">Resolution >= 640x360 — <span class="small">pending</span></li>
+            <li id="chkConsent">Consent given — <span class="small">pending</span></li>
+          </ul>
+
+          <div style="margin-top:12px">
+            <label><input id="consent" type="checkbox"> I consent to camera checks & snapshot on alerts</label>
+          </div>
+
+          <div style="margin-top:12px">
+            <button class="btn" id="btnStartCam">Start Camera</button>
+            <button class="btn ghost" id="btnRunChecks">Run Checks</button>
+          </div>
+
+          <div style="margin-top:14px">
+            <button class="btn start" id="btnStartExam" disabled>Start Exam</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const preview = document.getElementById('preview');
+const btnStartCam = document.getElementById('btnStartCam');
+const btnRunChecks = document.getElementById('btnRunChecks');
+const btnStartExam = document.getElementById('btnStartExam');
+const chkCam = document.getElementById('chkCam');
+const chkRes = document.getElementById('chkRes');
+const chkConsent = document.getElementById('chkConsent');
+let stream = null;
+let fpsSamples = [];
+let fpsTimer = null;
+
+btnStartCam.addEventListener('click', async () => {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({video:{width:640,height:360}, audio:false});
+    preview.srcObject = stream;
+    document.getElementById('camStatus').innerHTML = 'Camera: <strong>Started</strong>';
+    chkCam.innerHTML = 'Camera permission — <span class="small">OK</span>';
+    startFps();
+  } catch(err){
+    alert('Camera error: ' + err.message);
+    chkCam.innerHTML = 'Camera permission — <span class="small">Failed</span>';
+  }
+});
+
+function startFps(){
+  fpsSamples = [];
+  let last = performance.now();
+  if(fpsTimer) clearInterval(fpsTimer);
+  fpsTimer = setInterval(() => {
+    const now = performance.now();
+    const delta = now - last; last = now;
+    const fps = 1000/Math.max(1,delta);
+    fpsSamples.push(fps); if(fpsSamples.length>10) fpsSamples.shift();
+    const avg = Math.round(fpsSamples.reduce((a,b)=>a+b,0)/fpsSamples.length) || 0;
+    document.getElementById('fpsStatus').innerText = 'FPS (est): ' + avg;
+    const w = preview.videoWidth || 640; const h = preview.videoHeight || 360;
+    document.getElementById('resStatus').innerText = 'Resolution: ' + w + '×' + h;
+    // simple resolution check
+    if(w >= 640 && h >= 360) {
+      chkRes.innerHTML = 'Resolution >= 640x360 — <span class="small">OK</span>';
+    } else {
+      chkRes.innerHTML = 'Resolution >= 640x360 — <span class="small">Fail</span>';
+    }
+    toggleStart();
+  }, 700);
+}
+
+btnRunChecks.addEventListener('click', () => {
+  // re-evaluate
+  if(stream) {
+    chkCam.innerHTML = 'Camera permission — <span class="small">OK</span>';
+  } else {
+    chkCam.innerHTML = 'Camera permission — <span class="small">Fail</span>';
+  }
+  if(document.getElementById('consent').checked) {
+    chkConsent.innerHTML = 'Consent given — <span class="small">OK</span>';
+  } else {
+    chkConsent.innerHTML = 'Consent given — <span class="small">Pending</span>';
+  }
+  toggleStart();
+});
+
+document.getElementById('consent').addEventListener('change', toggleStart);
+
+function toggleStart(){
+  const resOK = (preview.videoWidth >= 640 && preview.videoHeight >= 360);
+  const camOK = !!stream;
+  const consent = document.getElementById('consent').checked;
+  if(camOK && resOK && consent) {
+    btnStartExam.disabled = false;
+  } else {
+    btnStartExam.disabled = true;
+  }
+}
+
+btnStartExam.addEventListener('click', () => {
+  // ensure sessionId exists (dashboard should have set it)
+  if(!localStorage.getItem('sessionId')) {
+    localStorage.setItem('sessionId', 'sess-' + Math.random().toString(36).slice(2,9) + '-' + Date.now().toString(36));
+  }
+  localStorage.setItem('captureCfg', JSON.stringify({frameIntervalMs:600, frameWidth:640, frameHeight:360, jpegQ:0.7}));
+  window.location.href = 'exam.html';
+});
+</script>
+</body>
+</html>
