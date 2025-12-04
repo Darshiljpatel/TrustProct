@@ -1,0 +1,27 @@
+[
+  {
+    "q": "What does HTML stand for?",
+    "options": ["HyperText Markup Language", "HighText Machine Language", "Hyper Tool Multi Language", "None of the above"],
+    "correct": 0
+  },
+  {
+    "q": "CSS is used for?",
+    "options": ["Structuring Data", "Styling Webpages", "Storing Data", "Compiling Code"],
+    "correct": 1
+  },
+  {
+    "q": "Which of these is a JavaScript data type?",
+    "options": ["Car", "Boolean", "Planet", "Metal"],
+    "correct": 1
+  },
+  {
+    "q": "Which tag is used for JavaScript?",
+    "options": ["<script>", "<js>", "<javascript>", "<code>"],
+    "correct": 0
+  },
+  {
+    "q": "Which HTML tag is used to create a link?",
+    "options": ["<a>", "<link>", "<href>", "<anchor>"],
+    "correct": 0
+  }
+]
